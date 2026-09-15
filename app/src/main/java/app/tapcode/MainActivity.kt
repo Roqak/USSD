@@ -2,7 +2,6 @@ package app.tapcode
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.os.Build
 import android.os.Bundle
 import android.provider.Settings
 import android.widget.Button
@@ -15,11 +14,13 @@ import app.tapcode.config.ConfigRepository
 import app.tapcode.engine.DialogDriver
 import app.tapcode.engine.SimDetector
 import android.content.Intent
+import android.net.Uri
 
 /**
  * UX-01: home screen with detected SIMs and quick-answer tiles for MTN lines.
  * UX-08: status checks for call permission and the accessibility service,
- * with a fix action for each.
+ * with a fix action for each — including the Android 13+ restricted-settings
+ * path for sideloaded installs.
  */
 class MainActivity : AppCompatActivity() {
 
@@ -57,10 +58,10 @@ class MainActivity : AppCompatActivity() {
     private fun refresh() {
         val callOk = ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) ==
             PackageManager.PERMISSION_GRANTED
-        val a11yOk = DialogDriver.isBound()
+        val a11yState = AccessibilityStatus.check(this)
         status.text = buildString {
             appendLine("Call permission: ${if (callOk) "granted" else "missing"} (UX-08)")
-            appendLine("Session driver: ${if (a11yOk) "enabled" else "disabled"} (UX-08)")
+            appendLine("Session driver: ${AccessibilityStatus.instructions(a11yState)}")
             appendLine()
             appendLine("For MTN lines. Tapcode is not affiliated with MTN Nigeria.")
         }
@@ -103,8 +104,19 @@ class MainActivity : AppCompatActivity() {
         ) {
             ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CALL_PHONE), 1)
         }
-        if (!DialogDriver.isBound()) {
-            startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+        when (AccessibilityStatus.check(this)) {
+            AccessibilityStatus.State.RESTRICTED -> openAppDetails()
+            AccessibilityStatus.State.DISABLED ->
+                startActivity(Intent(Settings.ACTION_ACCESSIBILITY_SETTINGS))
+            AccessibilityStatus.State.ENABLED -> Unit
         }
+    }
+
+    /** App info is where the ⋮ → "Allow restricted settings" control lives. */
+    private fun openAppDetails() {
+        startActivity(
+            Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS)
+                .setData(Uri.parse("package:$packageName"))
+        )
     }
 }
