@@ -11,6 +11,7 @@ import android.widget.Button
 import android.widget.EditText
 import android.widget.LinearLayout
 import android.widget.TextView
+import app.tapcode.config.ConfigRepository
 import app.tapcode.config.TapcodeConfig
 
 /**

@@ -93,7 +93,20 @@ class SessionController(
         watchdog?.cancel()
         watchdog = scope.launch {
             val advanced = withTimeoutOrNull(stepTimeoutMs) { dialer.awaitDialogAdvance() }
-            if (advanced != true) onError("timeout")
+            if (advanced != true) onTimeout()
+        }
+    }
+
+    /** SE-06: timeouts redial and replay the path, at most maxRetries times. */
+    fun onTimeout() {
+        if (!active) return
+        watchdog?.cancel()
+        if (retries < maxRetries) {
+            retries++
+            dial()
+        } else {
+            active = false
+            transition(SessionState.ERROR, message = "timeout")
         }
     }
 
@@ -119,14 +132,9 @@ class SessionController(
         if (stepIndex >= path.size) return
         val step = path[stepIndex]
         if (!screen.raw.contains(Regex(step.expect, RegexOption.IGNORE_CASE))) {
-            if (retries < maxRetries) {
-                retries++
-                stepIndex = 0
-                dial()
-            } else {
-                active = false
-                transition(SessionState.ERROR, screen, message = "path mismatch at step $stepIndex")
-            }
+            // PRD 6.3: stop on mismatch, show the live menu, flag for update
+            active = false
+            transition(SessionState.ERROR, screen, message = "path mismatch at step $stepIndex")
             return
         }
         stepIndex++

@@ -74,7 +74,7 @@ class SessionControllerTest {
         val dialer = FakeDialer()
         val c = controller(dialer)
         c.start(SessionRequest("*123#"))
-        c.onDialog("1. Balance\n2. Buy Data")
+        c.onDialog("1. Check balance\n2. My number")
         assertEquals(SessionState.MENU, c.state.value)
         c.send("1")
         assertEquals(listOf("1"), dialer.replies)
@@ -111,10 +111,10 @@ class SessionControllerTest {
             maxRetries = 2
         )
         c.start(SessionRequest("*123#"))
-        // Simulate timeout errors directly via watchdog path
-        repeat(3) { c.onDialog("") }
+        repeat(2) { c.onTimeout() }   // retries
+        c.onTimeout()                 // third failure -> ERROR
         assertEquals(SessionState.ERROR, c.state.value)
-        assertTrue(dialer.dials.size >= 3)
+        assertEquals(3, dialer.dials.size)
     }
 
     @Test
@@ -140,13 +140,16 @@ class SessionControllerTest {
         c.start(
             SessionRequest(
                 "*123#",
-                path = listOf(SessionRequest.Step("(?i)balance", "1"))
+                path = listOf(
+                    SessionRequest.Step("(?i)balance", "1"),
+                    SessionRequest.Step("(?i)buy data", "2")
+                )
             )
         )
-        val screen = c.onDialog("1. Balance\n2. Buy Data")
+        val screen = c.onDialog("1. Balance\n2. My number")
         assertEquals(ScreenKind.MENU, screen?.kind)
         assertEquals(listOf("1"), dialer.replies)
-        // Mismatch: next screen does not expect "data" pattern
+        // Mismatch: PRD 6.3 says stop, show live menu, flag for update
         c.onDialog("1. Something else entirely")
         assertEquals(SessionState.ERROR, c.state.value)
         assertFalse(c.isActive)

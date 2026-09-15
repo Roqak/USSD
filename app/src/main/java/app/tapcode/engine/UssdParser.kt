@@ -9,7 +9,7 @@ data class ParseResult(
 
 class UssdParser(private val config: TapcodeConfig) {
 
-    private val optionRegex = Regex(config.optionPattern)
+    private val optionRegex = Regex(config.optionPattern, setOf(RegexOption.MULTILINE, RegexOption.IGNORE_CASE))
     private val morePattern = Regex("""(?im)^\s*(\d{1,3}|[#*0])\s*[.):\-]?\s*(more|next|see more|load more)\b.*$""")
     private val inputPrompt = Regex("""(?i)(enter|input|type|reply|respond|select|choose|provide)[^:]*:?\s*$""")
     private val finalMarkers = Regex(

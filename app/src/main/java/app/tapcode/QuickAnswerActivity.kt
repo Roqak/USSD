@@ -39,16 +39,17 @@ class QuickAnswerActivity : AppCompatActivity() {
         tm.sendUssdRequest(
             code,
             object : TelephonyManager.UssdResponseCallback() {
-                override fun onResponse(
+                override fun onReceiveUssdResponse(
                     telephonyManager: TelephonyManager,
-                    response: String?
+                    request: String,
+                    response: CharSequence
                 ) {
-                    runOnUiThread { result.text = response ?: "No response" }
+                    runOnUiThread { result.text = response?.toString() ?: "No response" }
                 }
 
                 override fun onReceiveUssdResponseFailed(
                     telephonyManager: TelephonyManager,
-                    request: String?,
+                    request: String,
                     failureCode: Int
                 ) {
                     runOnUiThread {

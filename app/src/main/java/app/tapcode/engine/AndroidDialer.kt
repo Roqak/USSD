@@ -26,12 +26,10 @@ class AndroidDialer(private val context: Context) : Dialer {
     }
 
     private fun subscriptionIdToHandle(subscriptionId: Int): android.telecom.PhoneAccountHandle? {
-        val tm = context.getSystemService(TelephonyManager::class.java) ?: return null
+        val tm = context.getSystemService(android.telecom.TelecomManager::class.java) ?: return null
         return try {
-            @Suppress("DEPRECATION")
-            val sm = context.getSystemService(android.telephony.SubscriptionManager::class.java)
-            val sub = sm?.getActiveSubscriptionInfo(subscriptionId) ?: return null
-            android.telephony.SubscriptionManager.getPhoneAccountHandle(sub)
+            // Phone account ids for SIM accounts equal their subscription id
+            tm.getCallCapablePhoneAccounts().firstOrNull { it.id == subscriptionId.toString() }
         } catch (_: Exception) {
             null
         }

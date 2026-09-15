@@ -69,7 +69,7 @@ class ConfigRepository(private val context: Context) {
          * Release signing key for remote configs. Replace with the production
          * public key before shipping; the value below is a dev-only placeholder.
          */
-        const val PUBLIC_KEY_PEM: String = """
+        val PUBLIC_KEY_PEM: String = """
             MFwwDQYJKoZIhvcNAQEBBQADSwAwSAJBAKfCUnHsWPTOLdVYbVa4cUaFRlW9
             5b6Pum7XhE8q1Q0i1P4nS8Z2aF0bQe5yMvXrJ7kLd3TgHcWvNsAoCuEkCAwEAAQ==
         """.trimIndent().replace("\n", "")
