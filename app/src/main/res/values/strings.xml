@@ -1,0 +1,5 @@
+<resources>
+    <string name="app_name">Tapcode</string>
+    <string name="accessibility_label">Tapcode session driver</string>
+    <string name="accessibility_description">Reads USSD dialogs and taps reply buttons only while a Tapcode session is active. Nothing leaves your phone.</string>
+</resources>

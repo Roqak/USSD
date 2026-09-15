@@ -1,0 +1,2 @@
+-keep class app.tapcode.config.** { *; }
+-keepattributes *Annotation*

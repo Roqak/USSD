@@ -1,0 +1,19 @@
+{
+  "carrier": "mtn-ng",
+  "version": 1,
+  "optionPattern": "^\\s*(\\d{1,3}|[#*])\\s*(?:[.):\\-]\\s*|\\s+)(\\S.*)$",
+  "chargeKeywords": ["N", "₦", "charge", "buy", "subscribe", "renew"],
+  "dialogPackages": ["com.android.phone"],
+  "buttonSelectors": {
+    "send":   { "viewIds": ["android:id/button1"], "labels": ["send", "reply", "ok"] },
+    "cancel": { "viewIds": ["android:id/button2"], "labels": ["cancel", "dismiss", "close"] }
+  },
+  "quickAnswers": {
+    "airtimeBalance": { "code": "*310#", "mode": "single" },
+    "dataBalance":    { "code": "*323#", "mode": "single" },
+    "myNumber":       { "code": "*123*1*1#", "mode": "single" }
+  },
+  "paths": {
+    "selfService": { "code": "*123#", "steps": [] }
+  }
+}

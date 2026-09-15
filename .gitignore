@@ -5,6 +5,12 @@ __pycache__/
 *.egg-info/
 dist/
 build/
+.gradle/
+local.properties
 .DS_Store
 node_modules/
 *.log
+*.apk
+*.keystore
+.idea/
+captures/
