@@ -58,6 +58,9 @@ class MainActivity : AppCompatActivity() {
     private fun refresh() {
         val callOk = ContextCompat.checkSelfPermission(this, Manifest.permission.CALL_PHONE) ==
             PackageManager.PERMISSION_GRANTED
+        val phoneStateOk = ContextCompat.checkSelfPermission(
+            this, Manifest.permission.READ_PHONE_STATE
+        ) == PackageManager.PERMISSION_GRANTED
         val a11yState = AccessibilityStatus.check(this)
         status.text = buildString {
             appendLine("Call permission: ${if (callOk) "granted" else "missing"} (UX-08)")
@@ -67,12 +70,25 @@ class MainActivity : AppCompatActivity() {
         }
 
         simList.removeAllViews()
-        if (!callOk) {
-            ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.CALL_PHONE), 1)
+        if (!callOk || !phoneStateOk) {
+            ActivityCompat.requestPermissions(
+                this,
+                arrayOf(Manifest.permission.CALL_PHONE, Manifest.permission.READ_PHONE_STATE),
+                1
+            )
             return
         }
         val cfg = ConfigRepository(this).load()
-        simDetector.detectSims().forEach { sim ->
+        val sims = simDetector.detectSims()
+        if (sims.isEmpty()) {
+            simList.addView(TextView(this).apply {
+                text = "No SIMs detected. Make sure a SIM is inserted and active."
+                textSize = 16f
+                setPadding(0, 24, 0, 24)
+            })
+            return
+        }
+        sims.forEach { sim ->
             simList.addView(TextView(this).apply {
                 text = "${sim.carrierName} (SIM ${sim.subscriptionId})" +
                     if (sim.isMtn) " — quick answers ready" else ""
