@@ -1,7 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <color name="primary">#1A73E8</color>
+    <!-- Brand -->
+    <color name="primary">#4338CA</color>
     <color name="on_primary">#FFFFFF</color>
-    <color name="background">#FAFAFA</color>
+    <color name="primary_container">#E0E7FF</color>
+    <color name="on_primary_container">#1E1B4B</color>
+
+    <!-- Neutrals -->
+    <color name="background">#F7F7FB</color>
     <color name="surface">#FFFFFF</color>
+    <color name="on_surface">#1B1D24</color>
+    <color name="on_surface_muted">#5B6270</color>
+    <color name="outline">#D9DCE5</color>
+
+    <!-- Status -->
+    <color name="ok">#1B7A3D</color>
+    <color name="ok_container">#E3F2E8</color>
+    <color name="warn">#B45309</color>
+    <color name="warn_container">#FCEED3</color>
     <color name="error">#B3261E</color>
+    <color name="error_container">#FCE8E6</color>
+
+    <!-- Session overlay (always dark, independent of day/night) -->
+    <color name="overlay_bg">#F21B1E26</color>
+    <color name="overlay_on_bg">#E8EAF0</color>
+    <color name="overlay_muted">#9AA1AE</color>
+    <color name="overlay_field">#FFFFFF</color>
+    <color name="overlay_tint">#2EFFFFFF</color>
 </resources>

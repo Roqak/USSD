@@ -14,3 +14,5 @@ node_modules/
 *.keystore
 .idea/
 captures/
+keystore.properties
+tapcode-release.keystore
