@@ -147,7 +147,9 @@ class SessionControllerTest {
             )
         )
         val screen = c.onDialog("1. Balance\n2. My number")
-        assertEquals(ScreenKind.MENU, screen?.kind)
+        // UX: a known path answers the menu behind a progress screen — the
+        // operator menu is never shown while replaying.
+        assertEquals(ScreenKind.PROGRESS, screen?.kind)
         assertEquals(listOf("1"), dialer.replies)
         // Mismatch: PRD 6.3 says stop, show live menu, flag for update
         c.onDialog("1. Something else entirely")

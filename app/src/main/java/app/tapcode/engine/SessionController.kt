@@ -52,7 +52,16 @@ class SessionController(
         when (parsed.screen.kind) {
             ScreenKind.MENU -> {
                 transition(SessionState.MENU, parsed.screen)
-                maybeAutoReplay(parsed.screen)
+                if (maybeAutoReplay(parsed.screen)) {
+                    // UX: when the saved path can answer the operator's menu,
+                    // never surface it — show progress until the next dialog.
+                    return UssdScreen(
+                        raw = parsed.screen.raw,
+                        kind = ScreenKind.PROGRESS,
+                        prompt = "",
+                        confidence = parsed.confidence
+                    )
+                }
             }
             ScreenKind.INPUT -> transition(SessionState.MENU, parsed.screen)
             ScreenKind.PROGRESS -> armWatchdog()
@@ -127,21 +136,22 @@ class SessionController(
         transition(SessionState.RESULT, screen)
     }
 
-    private fun maybeAutoReplay(screen: UssdScreen) {
-        val path = request?.path ?: return
-        if (stepIndex >= path.size) return
+    private fun maybeAutoReplay(screen: UssdScreen): Boolean {
+        val path = request?.path ?: return false
+        if (stepIndex >= path.size) return false
         val step = path[stepIndex]
         if (!screen.raw.contains(Regex(step.expect, RegexOption.IGNORE_CASE))) {
             // PRD 6.3: stop on mismatch, show the live menu, flag for update
             active = false
             transition(SessionState.ERROR, screen, message = "path mismatch at step $stepIndex")
-            return
+            return false
         }
         stepIndex++
         transition(SessionState.REPLAYING, screen)
         dialer.sendReply(step.reply)
         transition(SessionState.WAITING)
         armWatchdog()
+        return true
     }
 
     private var lastScreen: UssdScreen? = null

@@ -10,6 +10,7 @@ import android.view.Gravity
 import android.view.View
 import android.widget.LinearLayout
 import android.widget.TextView
+import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
@@ -17,6 +18,7 @@ import app.tapcode.config.ConfigRepository
 import app.tapcode.config.TapcodeConfig
 import app.tapcode.engine.DialogDriver
 import app.tapcode.engine.SimDetector
+import app.tapcode.engine.SessionRequest
 import com.google.android.material.button.MaterialButton
 
 /**
@@ -135,13 +137,51 @@ class MainActivity : AppCompatActivity() {
                     )
                 })
             }
+            cfg.paths.forEach { (name, path) ->
+                qaList.addView(quickAnswerTile(name, sim.carrierName, filled = true) {
+                    startSession(sim, path)
+                })
+            }
         }
         return card
     }
 
+    /** Opens a carrier flow as a Tapcode session; the overlay drives the menus. */
+    private fun startSession(sim: SimDetector.SimInfo, path: TapcodeConfig.Path) {
+        val controller = DialogDriver.controller
+        if (controller == null || !DialogDriver.isBound()) {
+            Toast.makeText(
+                this,
+                "Enable the Tapcode session driver first, then try again.",
+                Toast.LENGTH_LONG
+            ).show()
+            return
+        }
+        if (controller.isActive) {
+            Toast.makeText(this, "A session is already running.", Toast.LENGTH_SHORT).show()
+            return
+        }
+        try {
+            controller.start(
+                SessionRequest(
+                    code = path.code,
+                    subscriptionId = sim.subscriptionId,
+                    path = path.steps.map { SessionRequest.Step(it.expect, it.reply) }
+                )
+            )
+        } catch (_: IllegalStateException) {
+            Toast.makeText(this, "A session is already running.", Toast.LENGTH_SHORT).show()
+        }
+    }
+
     private fun dp(v: Int): Int = (v * resources.displayMetrics.density).toInt()
 
-    private fun quickAnswerTile(rawName: String, carrier: String, onClick: () -> Unit): MaterialButton {
+    private fun quickAnswerTile(
+        rawName: String,
+        carrier: String,
+        filled: Boolean = false,
+        onClick: () -> Unit
+    ): MaterialButton {
         val name = rawName.replace(Regex("([a-z])([A-Z])"), "$1 $2")
             .replaceFirstChar { it.uppercase() }
         return MaterialButton(this, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
@@ -151,7 +191,15 @@ class MainActivity : AppCompatActivity() {
             cornerRadius = dp(12)
             setStrokeColorResource(R.color.outline)
             strokeWidth = dp(1)
-            setTextColor(ContextCompat.getColor(context, R.color.on_surface))
+            if (filled) {
+                backgroundTintList = android.content.res.ColorStateList.valueOf(
+                    ContextCompat.getColor(context, R.color.primary)
+                )
+                setTextColor(ContextCompat.getColor(context, R.color.on_primary))
+                contentDescription = "$rawName session on $carrier"
+            } else {
+                setTextColor(ContextCompat.getColor(context, R.color.on_surface))
+            }
             gravity = Gravity.START or Gravity.CENTER_VERTICAL
             minHeight = dp(44)
             insetTop = 0

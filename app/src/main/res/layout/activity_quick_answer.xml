@@ -29,33 +29,42 @@
         android:textColor="@color/on_surface"
         android:textStyle="bold" />
 
-    <TextView
-        android:id="@+id/codeChip"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="12dp"
-        android:background="@drawable/bg_code_chip"
-        android:fontFamily="monospace"
-        android:paddingLeft="14dp"
-        android:paddingRight="14dp"
-        android:paddingTop="6dp"
-        android:paddingBottom="6dp"
-        android:textAppearance="?attr/textAppearanceTitleMedium"
-        android:textColor="@color/on_primary_container" />
-
     <com.google.android.material.card.MaterialCardView
         style="@style/Widget.Tapcode.Card"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_marginTop="16dp">
 
-        <TextView
-            android:id="@+id/resultText"
+        <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:fontFamily="monospace"
-            android:textAppearance="?attr/textAppearanceBodyMedium"
-            android:textColor="@color/on_surface" />
+            android:orientation="vertical">
+
+            <TextView
+                android:id="@+id/resultHeading"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:textAppearance="?attr/textAppearanceTitleMedium"
+                android:textColor="@color/on_surface" />
+
+            <TextView
+                android:id="@+id/resultAmount"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="4dp"
+                android:textAppearance="?attr/textAppearanceHeadlineMedium"
+                android:textColor="@color/primary"
+                android:textStyle="bold"
+                android:visibility="gone" />
+
+            <TextView
+                android:id="@+id/resultText"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="8dp"
+                android:textAppearance="?attr/textAppearanceBodyMedium"
+                android:textColor="@color/on_surface" />
+        </LinearLayout>
     </com.google.android.material.card.MaterialCardView>
 
     <com.google.android.material.button.MaterialButton

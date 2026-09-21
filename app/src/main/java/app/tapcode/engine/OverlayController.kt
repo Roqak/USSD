@@ -12,6 +12,7 @@ import android.view.WindowManager
 import android.view.accessibility.AccessibilityNodeInfo
 import android.widget.EditText
 import android.widget.LinearLayout
+import android.widget.ProgressBar
 import android.widget.TextView
 import androidx.core.content.ContextCompat
 import app.tapcode.R
@@ -30,8 +31,13 @@ class OverlayController(
 ) {
     private var view: LinearLayout? = null
     private var body: TextView? = null
+    private var heading: TextView? = null
+    private var progress: ProgressBar? = null
+    private var rawText: TextView? = null
     private var buttons: LinearLayout? = null
     private var input: EditText? = null
+    private var detailsOpen = false
+    private var lastRaw: String? = null
     private lateinit var config: ConfigRepository
 
     fun show() {
@@ -54,11 +60,22 @@ class OverlayController(
             setTextColor(Color.WHITE)
             contentDescription = "Tapcode session overlay. USSD dialog is hidden while this is open."
         }
+        heading = TextView(service).apply {
+            textSize = 24f
+            typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
+            setTextColor(Color.WHITE)
+            visibility = View.GONE
+            setPadding(0, dp(14), 0, 0)
+        }
         body = TextView(service).apply {
             textSize = 15f
             setTextColor(ContextCompat.getColor(service, R.color.overlay_on_bg))
             setLineSpacing(dp(2).toFloat(), 1f)
             setPadding(0, dp(10), 0, 0)
+        }
+        progress = ProgressBar(service).apply {
+            isIndeterminate = true
+            visibility = View.GONE
         }
         input = EditText(service).apply {
             hint = "Reply"
@@ -75,17 +92,26 @@ class OverlayController(
             orientation = LinearLayout.VERTICAL
             setPadding(0, dp(4), 0, 0)
         }
+        rawText = TextView(service).apply {
+            textSize = 12f
+            setTextColor(ContextCompat.getColor(service, R.color.overlay_muted))
+            visibility = View.GONE
+            setPadding(0, dp(12), 0, 0)
+        }
         val cancel = overlayButton(
             "Cancel session",
             "Cancel the current USSD session and dismiss the operator dialog",
             filled = false, ghost = true
         ) { cancel() }
         container.addView(title)
+        container.addView(heading)
         container.addView(body)
+        container.addView(progress)
         container.addView(input, LinearLayout.LayoutParams(
             LinearLayout.LayoutParams.MATCH_PARENT, LinearLayout.LayoutParams.WRAP_CONTENT
         ).apply { topMargin = dp(12) })
         container.addView(buttons)
+        container.addView(rawText)
         container.addView(cancel, sectionParams())
         view = container
 
@@ -103,20 +129,55 @@ class OverlayController(
 
     fun render(screen: UssdScreen) {
         show()
-        body?.text = if (screen.kind == ScreenKind.MENU) screen.prompt else screen.raw
+        if (lastRaw != screen.raw) {
+            detailsOpen = false
+            lastRaw = screen.raw
+        }
+        progress?.visibility = if (screen.kind == ScreenKind.PROGRESS) View.VISIBLE else View.GONE
+        heading?.visibility = View.GONE
+
+        when (screen.kind) {
+            ScreenKind.PROGRESS -> {
+                body?.text = if (screen.prompt.isBlank()) "Please wait…" else screen.prompt
+            }
+            ScreenKind.FINAL -> {
+                val friendly = UssdPresenter.present(screen.raw)
+                heading?.text = buildString {
+                    append(friendly.heading ?: "Result")
+                    friendly.amount?.let { append("\n$it") }
+                }
+                heading?.visibility = View.VISIBLE
+                body?.text = friendly.body
+            }
+            else -> body?.text = if (screen.kind == ScreenKind.MENU) screen.prompt else screen.raw
+        }
+
         val needsInput = screen.kind == ScreenKind.INPUT || screen.kind == ScreenKind.MENU
         input?.visibility = if (screen.kind == ScreenKind.INPUT) View.VISIBLE else View.GONE
+        rawText?.text = screen.raw
+        rawText?.visibility = if (detailsOpen && screen.kind == ScreenKind.MENU) View.VISIBLE else View.GONE
 
         buttons?.removeAllViews()
         if (screen.kind == ScreenKind.MENU) {
             screen.options.forEach { opt ->
                 buttons?.addView(
-                    overlayButton("${opt.number}. ${opt.label}", "Option ${opt.number}: ${opt.label}", filled = false) {
+                    overlayButton(opt.label, "Option ${opt.number}: ${opt.label}", filled = false) {
                         onReply(opt.number)
                     },
                     sectionParams()
                 )
             }
+            buttons?.addView(
+                overlayButton(
+                    if (detailsOpen) "Hide details" else "Details",
+                    "Show or hide the raw network response",
+                    filled = false, ghost = true
+                ) {
+                    detailsOpen = !detailsOpen
+                    rawText?.visibility = if (detailsOpen) View.VISIBLE else View.GONE
+                },
+                sectionParams()
+            )
         }
         if (needsInput && screen.mentionsCharge) {
             // UX-03: confirm before any reply on a charge screen
